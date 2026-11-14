@@ -1,0 +1,29 @@
+image_base 0x00400000  image_size 0x1d8a000  entry 0x00f0ac78  timestamp 0x6347f0b0
+relocations: yes
+sections:
+  .text    va 0x00401000 vsize  0xeb3000 raw  0xeb3000 chars 0x60000020
+  .rdata   va 0x012b4000 vsize  0x212000 raw  0x211a00 chars 0x40000040
+  .data    va 0x014c6000 vsize  0x1f9000 raw   0x7de00 chars 0xc0000040
+  .rsrc    va 0x016bf000 vsize   0xb7000 raw   0xb6800 chars 0x40000040
+  .reloc   va 0x01776000 vsize   0xdb000 raw   0xda600 chars 0x40000040
+  .idata   va 0x01851000 vsize    0x4000 raw    0x3e00 chars 0xc0000040
+  .text    va 0x01855000 vsize  0x935000 raw  0x934600 chars 0x60000020
+imports per dll:
+  WINMM.dll      5
+  WS2_32.dll     40
+  fmodex.dll     46
+  fmod_event.dll 47
+  d3d9.dll       1
+  d3dx9_43.dll   7
+  steam_api.dll  16
+  KERNEL32.dll   155
+  USER32.dll     61
+  ADVAPI32.dll   6
+  SHELL32.dll    2
+  WSOCK32.dll    3
+  DINPUT8.dll    1
+  XINPUT1_3.dll  2
+  ole32.dll      8
+  OLEAUT32.dll   2
+exports: 0 
+rich header (prodid build count):

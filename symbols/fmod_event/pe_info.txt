@@ -1,0 +1,24 @@
+image_base 0x10000000  image_size 0x6c000  entry 0x1003f2a8  timestamp 0x51df8767
+relocations: yes
+sections:
+  .text    va 0x10001000 vsize   0x4d84f raw   0x4da00 chars 0x60000020
+  .rdata   va 0x1004f000 vsize   0x1376b raw   0x13800 chars 0x40000040
+  .data    va 0x10063000 vsize    0x38a8 raw    0x1600 chars 0xc0000040
+  .rsrc    va 0x10067000 vsize     0x504 raw     0x600 chars 0x40000040
+  .reloc   va 0x10068000 vsize    0x3752 raw    0x3800 chars 0x42000040
+imports per dll:
+  WINMM.dll      1
+  KERNEL32.dll   88
+  fmodex.dll     127
+exports: 489 func=489
+rich header (prodid build count):
+  152 20115 1
+  158 40219 32
+  170 40219 144
+  156 40219 2
+  147 30729 7
+    1     0 261
+  171 40219 86
+  155 40219 1
+  154 40219 1
+  157 40219 1

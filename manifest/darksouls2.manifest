@@ -1,0 +1,13 @@
+# Dark Souls II (PC, the 2022 build) — lifter manifest.
+#
+# entry <va>            a function Ghidra missed (indirect-branch target)
+# replace <va> Name     define f_<VA> in C++ instead of the lifted body
+# hook <va> <end>       patch the byte range (unlifted, replaced by a hook)
+# code <va> <end>       code in a section not marked executable
+#
+# Arxan (the anti-tamper wrapper) has code in the ends of .rdata, .reloc
+# and .idata besides its own .text, and makes those sections executable
+# when it starts.
+code 014C5346 014C5A00
+code 018504FC 01850600
+code 01854C3E 01855000
