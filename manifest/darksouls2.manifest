@@ -17,3 +17,12 @@ entry 006978C9
 # A callback stored as an unaligned pointer (0x12ABE2F); called through obj+8.
 entry 0109FFA0
 entry 004E038F
+# Cases of a switch Arxan turned into push [0x7BD788 + edx*4]; ret (at 0x00A3EC98).
+entry 007BD775
+entry 007BD216
+entry 007BD49C
+entry 007BD342
+entry 007BD424
+entry 007BD611
+entry 007BD658
+entry 007BD753

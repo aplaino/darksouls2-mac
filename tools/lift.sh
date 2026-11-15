@@ -37,12 +37,15 @@ for f in DarkSoulsII.exe fmodex.dll fmod_event.dll; do
   ln -sf "$DARKSOULS2_GAME_DIR/Game/$f" "$here/work/lift/$f"
 done
 
+# The hand-written manifest and the generated entries (tools/find_entries.py).
+cat "$here/manifest/darksouls2.manifest" "$here/manifest/darksouls2.entries" > "$here/work/lift/darksouls2.manifest"
+
 echo "lift.sh: lifting DarkSoulsII.exe"
 # --optnone-x87-over: functions dense with x87 code take clang a very long
 # time to optimise; they are compiled as is. --stack-flow: Arxan writes
 # jumps, calls and branches as pushes and rets (push X; ret, push X; jmp F).
 (cd "$here/work/lift" && "$lift" --exe DarkSoulsII.exe --symbols "$here/symbols/darksouls2" \
-  --manifest "$here/manifest/darksouls2.manifest" --out "$here/generated" --optnone-x87-over 4000 \
+  --manifest "$here/work/lift/darksouls2.manifest" --out "$here/generated" --optnone-x87-over 4000 \
   --stack-flow \
   "${mods[@]}" "$@")
 echo "lift.sh: done"
