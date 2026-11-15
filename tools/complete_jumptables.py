@@ -9,6 +9,10 @@ comma separated, empty when Ghidra could not resolve the table). Every
 from the image: the table's size comes from the bound check before the jump
 (`cmp reg, N` / `push N; pop r2; cmp reg, r2`, then `ja`), or, without one,
 entries are read while they point into .text near the jump (at most 256).
+Tables Ghidra resolved get the image's entries added too, as it sometimes
+lists only some of them (when the index comes from a value it cannot
+follow): as many as the bound check allows, or, without one, those before
+the next table another jump uses when that one follows within 1 KiB.
 The original file is kept as JUMPTABLES.tsv.ghidra; the completed one
 replaces it. Disassembly by llvm-objdump (AT&T syntax).
 """
@@ -92,7 +96,13 @@ def main():
     tool = os.environ.get('OBJDUMP', 'llvm-objdump')
     dis = subprocess.run([tool, '-d', '--no-show-raw-insn', exe], capture_output=True,
                          text=True, check=True).stdout.splitlines()
-    filled = from_bound = 0
+    bases = sorted({int(m.group(2), 16) for m in map(JMP.match, dis) if m})
+
+    def next_base(table):
+        i = __import__('bisect').bisect_right(bases, table)
+        return bases[i] if i < len(bases) else None
+
+    filled = from_bound = extended = 0
     prev = []
     for line in dis:
         m = JMP.match(line)
@@ -111,6 +121,24 @@ def main():
                     known[jva] = ','.join('%08X' % t for t in targets)
                     filled += 1
                     from_bound += n is not None
+            else:
+                have = known[jva].split(',')
+                n = bound(prev, reg)
+                if n is None:
+                    nb = next_base(table)
+                    if nb is not None and nb - table <= 1024:
+                        n = (nb - table) // 4
+                more = []
+                for i in range(n or 0):
+                    t = rd32(table + 4 * i)
+                    if t is None or not (tlo <= t < thi) or abs(t - jva) > 0x10000:
+                        more = []  # not a table of n entries after all
+                        break
+                    if '%08X' % t not in have and t not in more:
+                        more.append(t)
+                if more:
+                    known[jva] = ','.join(have + ['%08X' % t for t in more])
+                    extended += 1
         im = INSN.match(line)
         if im:
             prev = (prev + [im.group(2).strip()])[-8:]
@@ -118,7 +146,8 @@ def main():
         f.write('\t'.join(header) + '\n')
         for jva in sorted(known):
             f.write('%08X\t%s\n' % (jva, known[jva]))
-    print('jump tables filled: %d (%d sized by their bound check)' % (filled, from_bound))
+    print('jump tables filled: %d (%d sized by their bound check), %d resolved ones extended'
+          % (filled, from_bound, extended))
 
 
 if __name__ == '__main__':
