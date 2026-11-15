@@ -5,17 +5,58 @@
 // DIR is the game install: the folder holding Game/ (DarkSoulsII.exe, the
 // .bdt archives, the FMOD DLLs). Defaults to $DARKSOULS2_GAME_DIR.
 // Arguments after `--` go on the game's own command line. Set
-// DARKSOULS2_TRACE=1 to log every HLE call.
+// DARKSOULS2_TRACE=1 to log every HLE call, DARKSOULS2_WATCH=1 to log the
+// game state ref/steam_api.c's watcher logs in the reference run (Watch).
 
 #include <sys/stat.h>
 
+#include <chrono>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <string>
+#include <thread>
 
 #include "runtime/log.h"
 #include "runtime/runtime.h"
+
+namespace {
+
+// The values ref/steam_api.c's watcher logs, in the same form, whenever one
+// changes (development: comparing start-up with the reference run).
+uint32_t Peek(uint32_t va) { return va && recomp::g_proc->mem.IsCommitted(va & ~0xFFFu) ? recomp::Rd32(va) : 0; }
+
+void Watch() {
+  const auto t0 = std::chrono::steady_clock::now();
+  uint32_t last[8] = {};
+  for (;;) {
+    uint32_t v[8];
+    const uint32_t mgr = Peek(0x1550414);
+    v[0] = mgr;
+    v[1] = mgr ? Peek(mgr + 0xCCC) : 0;
+    const uint32_t reg = Peek(0x15515D4);
+    v[2] = reg;
+    const uint32_t obj = reg ? Peek(reg + 0x20) : 0;
+    v[3] = obj;
+    v[4] = obj ? Peek(obj + 4) & 0xFF : 0;
+    const uint32_t sub = obj ? Peek(obj + 8) : 0;
+    v[5] = sub;
+    v[6] = sub ? Peek(sub + 0x24) : 0;
+    v[7] = reg ? Peek(reg + 0x18) : 0;
+    if (std::memcmp(v, last, sizeof v)) {
+      const long ms = long(std::chrono::duration_cast<std::chrono::milliseconds>(
+                               std::chrono::steady_clock::now() - t0).count());
+      std::fprintf(stderr,
+                   "watch [%8ld] mgr %08X mgr+CCC %08X reg %08X reg+20 %08X flag %u sub %08X "
+                   "state %u reg+18 %08X\n",
+                   ms, v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7]);
+      std::memcpy(last, v, sizeof v);
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+  }
+}
+
+}  // namespace
 
 int main(int argc, char** argv) {
   std::string game_dir, game_args;
@@ -67,5 +108,13 @@ int main(int argc, char** argv) {
   // the loader matches them by file name, so the game's static imports
   // find the mapped images.
   game.lifted_dlls = {{"Game\\fmodex.dll", 0}, {"Game\\fmod_event.dll", 0x11000000}};
+  if (const char* w = std::getenv("DARKSOULS2_WATCH"); w && *w && *w != '0') {
+    // Once the guest arena exists (RunProcess reserves it).
+    std::thread([] {
+      while (!recomp::g_proc || !recomp::g_proc->mem.base())
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+      Watch();
+    }).detach();
+  }
   return recomp::RunProcess(game, exe, game_dir, game_args);
 }
