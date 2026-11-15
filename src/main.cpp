@@ -8,6 +8,7 @@
 // DARKSOULS2_TRACE=1 to log every HLE call, DARKSOULS2_WATCH=1 to log the
 // game state ref/steam_api.c's watcher logs in the reference run (Watch).
 
+#include <dirent.h>
 #include <sys/stat.h>
 
 #include <chrono>
@@ -54,6 +55,17 @@ void Watch() {
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
   }
+}
+
+// A directory holding at least one entry.
+bool HasFiles(const std::string& dir) {
+  DIR* d = opendir(dir.c_str());
+  if (!d) return false;
+  bool any = false;
+  while (dirent* e = readdir(d))
+    if (e->d_name[0] != '.') any = true;
+  closedir(d);
+  return any;
 }
 
 }  // namespace
@@ -108,6 +120,8 @@ int main(int argc, char** argv) {
   // the loader matches them by file name, so the game's static imports
   // find the mapped images.
   game.lifted_dlls = {{"Game\\fmodex.dll", 0}, {"Game\\fmod_event.dll", 0x11000000}};
+  // DLC/License holds a licence file per DLC the player owns.
+  game.steam_owns_dlc = HasFiles(game_dir + "/DLC/License");
   if (const char* w = std::getenv("DARKSOULS2_WATCH"); w && *w && *w != '0') {
     // Once the guest arena exists (RunProcess reserves it).
     std::thread([] {

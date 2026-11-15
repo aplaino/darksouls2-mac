@@ -7,7 +7,7 @@ import sys
 IFACES = ['ISteamClient', 'ISteamUser', 'ISteamFriends', 'ISteamUtils', 'ISteamUserStats',
           'ISteamApps', 'ISteamNetworking', 'ISteamMatchmaking']
 IMPL = {('ISteamClient', 21), ('ISteamUtils', 9), ('ISteamUtils', 10), ('ISteamUser', 1), ('ISteamUser', 2),
-        ('ISteamFriends', 0), ('ISteamApps', 4)}
+        ('ISteamFriends', 0), ('ISteamApps', 4), ('ISteamApps', 6), ('ISteamApps', 7)}
 SLOTS = 128
 out = []
 for i in IFACES:

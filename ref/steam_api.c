@@ -45,6 +45,17 @@ static uint64_t* __attribute__((thiscall)) ISteamUser_2(void* self, uint64_t* ou
 }
 static const char* __attribute__((thiscall)) ISteamFriends_0(void* self) { (void)self; return "Player"; }
 static const char* __attribute__((thiscall)) ISteamApps_4(void* self) { (void)self; return "english"; }
+// The DLC licences are in the install, as for the native run.
+static int __attribute__((thiscall)) ISteamApps_6(void* self, uint32_t app) {
+  (void)self;
+  Log("BIsSubscribedApp(%u)", app);
+  return 1;
+}
+static int __attribute__((thiscall)) ISteamApps_7(void* self, uint32_t app) {
+  (void)self;
+  Log("BIsDlcInstalled(%u)", app);
+  return 1;
+}
 
 #include "stubs.inc"
 
