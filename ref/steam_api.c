@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <windows.h>
+#include <psapi.h>
 
 static FILE* g_log;
 static CRITICAL_SECTION g_log_mu;
@@ -37,9 +38,14 @@ static void __attribute__((thiscall)) ISteamClient_21(void* self, void* hook) { 
 static uint32_t g_app_id;
 static uint32_t __attribute__((thiscall)) ISteamUtils_9(void* self) { (void)self; return g_app_id; }
 static void __attribute__((thiscall)) ISteamUtils_10(void* self, int pos) { (void)self, (void)pos; }
-static int __attribute__((thiscall)) ISteamUser_1(void* self) { (void)self; return 0; }
+static int __attribute__((thiscall)) ISteamUser_1(void* self) {
+  (void)self;
+  Log("BLoggedOn from %p", __builtin_return_address(0));
+  return 0;
+}
 static uint64_t* __attribute__((thiscall)) ISteamUser_2(void* self, uint64_t* out) {
   (void)self;
+  Log("GetSteamID from %p", __builtin_return_address(0));
   *out = 0x0110000100000001ull;
   return out;
 }
@@ -66,10 +72,51 @@ static uint32_t Peek(uint32_t va) {
 static uint32_t PeekByte(uint32_t va) {
   return va && !IsBadReadPtr((void*)va, 1) ? *(volatile uint8_t*)va : 0;
 }
+// Logs each module the first time it is seen loaded.
+static void WatchModules(void) {
+  static HMODULE seen[512];
+  static int nseen;
+  HMODULE mods[512];
+  DWORD bytes;
+  if (!EnumProcessModules(GetCurrentProcess(), mods, sizeof mods, &bytes)) return;
+  for (DWORD i = 0; i < bytes / sizeof(HMODULE); i++) {
+    int known = 0;
+    for (int j = 0; j < nseen; j++) known |= seen[j] == mods[i];
+    if (known || nseen == 512) continue;
+    seen[nseen++] = mods[i];
+    char name[MAX_PATH];
+    if (GetModuleFileNameA(mods[i], name, sizeof name)) Log("module %s", name);
+  }
+}
+
+// The online subsystem's state machine (vtable 0x13F4714), found by a scan
+// of committed memory, as it lives inside another object.
+static uint32_t FindOnline(void) {
+  MEMORY_BASIC_INFORMATION mi;
+  for (uint8_t* p = (uint8_t*)0x10000; p < (uint8_t*)0x7F000000; p += mi.RegionSize) {
+    if (!VirtualQuery(p, &mi, sizeof mi)) break;
+    if (mi.State != MEM_COMMIT || (mi.Protect & (PAGE_NOACCESS | PAGE_GUARD))) continue;
+    for (uint32_t* w = (uint32_t*)mi.BaseAddress; (uint8_t*)w < (uint8_t*)mi.BaseAddress + mi.RegionSize; w++)
+      if (*w == 0x13F4714) return (uint32_t)w;
+  }
+  return 0;
+}
+
 static DWORD WINAPI Watch(void* arg) {
   (void)arg;
-  uint32_t last[8] = {0};
-  for (;;) {
+  uint32_t last[8] = {0}, online = 0, last_online[6] = {0};
+  for (int tick = 0;; tick++) {
+    if (tick % 100 == 0) WatchModules();
+    if (!online && tick % 2000 == 1000) online = FindOnline();
+    if (online) {
+      uint32_t o[6];
+      for (int i = 0; i < 6; i++) o[i] = Peek(online + 0x40 + 4 * i);
+      if (memcmp(o, last_online, sizeof o)) {
+        Log("online %08X +40 %08X +44 %08X state %u +4C %08X +50 %08X +54 %08X", online, o[0], o[1],
+            o[2], o[3], o[4], o[5]);
+        memcpy(last_online, o, sizeof o);
+      }
+    }
     uint32_t v[8];
     const uint32_t mgr = Peek(0x1550414);
     v[0] = mgr;

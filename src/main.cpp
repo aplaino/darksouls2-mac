@@ -27,10 +27,33 @@ namespace {
 // changes (development: comparing start-up with the reference run).
 uint32_t Peek(uint32_t va) { return va && recomp::g_proc->mem.IsCommitted(va & ~0xFFFu) ? recomp::Rd32(va) : 0; }
 
+// The online subsystem's state machine (vtable 0x13F4714): found by a scan
+// of guest memory for its vtable, as it lives inside another object.
+uint32_t FindOnline() {
+  for (uint32_t va = 0x00010000; va < 0x7F000000; va += 0x1000) {
+    if (!recomp::g_proc->mem.IsCommitted(va)) continue;
+    for (uint32_t o = 0; o < 0x1000; o += 4)
+      if (recomp::Rd32(va + o) == 0x13F4714) return va + o;
+  }
+  return 0;
+}
+
 void Watch() {
   const auto t0 = std::chrono::steady_clock::now();
-  uint32_t last[8] = {};
-  for (;;) {
+  uint32_t last[8] = {}, online = 0, last_online[6] = {};
+  for (int tick = 0;; tick++) {
+    if (!online && tick % 2000 == 1000) online = FindOnline();
+    if (online) {
+      uint32_t o[6];
+      for (int i = 0; i < 6; i++) o[i] = Peek(online + 0x40 + 4 * i);
+      if (std::memcmp(o, last_online, sizeof o)) {
+        const long ms = long(std::chrono::duration_cast<std::chrono::milliseconds>(
+                                 std::chrono::steady_clock::now() - t0).count());
+        std::fprintf(stderr, "watch [%8ld] online %08X +40 %08X +44 %08X state %u +4C %08X +50 %08X +54 %08X\n",
+                     ms, online, o[0], o[1], o[2], o[3], o[4], o[5]);
+        std::memcpy(last_online, o, sizeof o);
+      }
+    }
     uint32_t v[8];
     const uint32_t mgr = Peek(0x1550414);
     v[0] = mgr;

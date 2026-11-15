@@ -15,6 +15,6 @@ if [[ ! -d $BOTTLE/drive_c/DarkSoulsII/Game ]]; then
   cp -cR $DARKSOULS2_GAME_DIR/Game $DARKSOULS2_GAME_DIR/DLC $BOTTLE/drive_c/DarkSoulsII/
 fi
 python3 gen_stubs.py stubs.inc
-i686-w64-mingw32-gcc -O2 -shared -o steam_api.dll steam_api.c -static-libgcc -Wl,--kill-at
+i686-w64-mingw32-gcc -O2 -shared -o steam_api.dll steam_api.c -static-libgcc -Wl,--kill-at -lpsapi
 cp steam_api.dll $BOTTLE/drive_c/windows/syswow64/
 echo "setup.sh: ready (ref/run.sh)"
