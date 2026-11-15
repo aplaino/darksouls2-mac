@@ -30,7 +30,10 @@ if(TARGET darksouls2_lifted)
   target_include_directories(darksouls2 PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/generated")
   # recomp_dsound: FMOD finds no WASAPI or WinMM output here and falls back
   # to DirectSound, which it loads with LoadLibrary("dsound.dll").
+  # recomp_dbghelp: Havok's stack tracer loads dbghelp.dll at start and
+  # calls what it finds.
   target_link_libraries(darksouls2 PRIVATE recomp_runtime recomp_d3d9
-                        recomp_dinput8 recomp_xinput recomp_online recomp_dsound)
+                        recomp_dinput8 recomp_xinput recomp_online recomp_dsound
+                        recomp_dbghelp)
   set_target_properties(darksouls2 PROPERTIES ENABLE_EXPORTS ON)  # names in fault backtraces
 endif()
