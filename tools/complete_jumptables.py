@@ -12,7 +12,9 @@ entries are read while they point into .text near the jump (at most 256).
 Tables Ghidra resolved get the image's entries added too, as it sometimes
 lists only some of them (when the index comes from a value it cannot
 follow): as many as the bound check allows, or, without one, those before
-the next table another jump uses when that one follows within 1 KiB.
+the next table another jump uses when that one follows within 1 KiB, or
+else those that point into the jump's own function (functions.tsv next to
+JUMPTABLES.tsv: its first and last address), up to the first that does not.
 The original file is kept as JUMPTABLES.tsv.ghidra; the completed one
 replaces it. Disassembly by llvm-objdump (AT&T syntax).
 """
@@ -93,6 +95,23 @@ def main():
     header, rows = rows[0], rows[1:]
     known = {int(r[0], 16): (r[1] if len(r) > 1 else '') for r in rows}
 
+    funcs = []
+    ftsv = os.path.join(os.path.dirname(tsv), 'functions.tsv')
+    if os.path.exists(ftsv):
+        for line in open(ftsv).read().splitlines()[1:]:
+            f = line.split('\t')
+            funcs.append((int(f[1], 16), int(f[2], 16)))
+        funcs.sort()
+
+    def function_of(va):
+        """The smallest function range holding va, or None."""
+        best = None
+        i = __import__('bisect').bisect_right(funcs, (va, 0xFFFFFFFF))
+        for lo, hi in funcs[max(0, i - 64):i]:
+            if lo <= va <= hi and (best is None or hi - lo < best[1] - best[0]):
+                best = (lo, hi)
+        return best
+
     tool = os.environ.get('OBJDUMP', 'llvm-objdump')
     dis = subprocess.run([tool, '-d', '--no-show-raw-insn', exe], capture_output=True,
                          text=True, check=True).stdout.splitlines()
@@ -136,6 +155,13 @@ def main():
                         break
                     if '%08X' % t not in have and t not in more:
                         more.append(t)
+                if n is None and (fr := function_of(jva)):
+                    for i in range(256):
+                        t = rd32(table + 4 * i)
+                        if t is None or not (fr[0] <= t <= fr[1]):
+                            break
+                        if '%08X' % t not in have and t not in more:
+                            more.append(t)
                 if more:
                     known[jva] = ','.join(have + ['%08X' % t for t in more])
                     extended += 1
