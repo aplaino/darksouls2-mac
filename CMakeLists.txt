@@ -32,8 +32,9 @@ if(TARGET darksouls2_lifted)
   # to DirectSound, which it loads with LoadLibrary("dsound.dll").
   # recomp_dbghelp: Havok's stack tracer loads dbghelp.dll at start and
   # calls what it finds.
+  # recomp_quartz: the movies play through a DirectShow filter graph.
   target_link_libraries(darksouls2 PRIVATE recomp_runtime recomp_d3d9
                         recomp_dinput8 recomp_xinput recomp_online recomp_dsound
-                        recomp_dbghelp)
+                        recomp_dbghelp recomp_quartz)
   set_target_properties(darksouls2 PROPERTIES ENABLE_EXPORTS ON)  # names in fault backtraces
 endif()

@@ -11,3 +11,9 @@
 code 014C5346 014C5A00
 code 018504FC 01850600
 code 01854C3E 01855000
+
+# Reached through Arxan jmp [esp-8] returns (found at run time).
+entry 006978C9
+# A callback stored as an unaligned pointer (0x12ABE2F); called through obj+8.
+entry 0109FFA0
+entry 004E038F
