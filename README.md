@@ -28,8 +28,7 @@ does not work.
 Early, but playable: title screen, menus, character creation, and play in
 the first areas.
 
-- Around 58 fps (median) on an M-series Mac; the GPU needs 5-7 ms a frame,
-  so the dips that remain are CPU-side
+- A steady 60 fps (the game's own limit) on an M-series Mac
 - Metal renderer at the display's full resolution
 - Sound and music (FMOD through DirectSound)
 - Keyboard and mouse, and controllers
@@ -40,8 +39,9 @@ the first areas.
 Known issues:
 
 - The opening movie is skipped (there is no WMV decoder yet).
-- Stutter: frame-rate dips, and short pauses the first time an effect is
-  drawn while its Metal pipeline compiles (those are cached for later runs).
+- Occasional hitches (50-140 ms, about one every 20 s): new shaders are
+  translated to Metal on the main thread, and one recurring hitch is not
+  yet explained.
 - Shadows sometimes look wrong.
 - Quitting can end with a crash report from the game's worker threads.
 
