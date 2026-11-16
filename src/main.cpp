@@ -133,7 +133,11 @@ int main(int argc, char** argv) {
   game.exe_name = "Game\\DarkSoulsII.exe";
   game.current_dir = game.guest_dir + "\\Game";
   game.total_phys_mb = 4096;
-  game.video_memory_mb = 1024;
+  // Just under 2 GB: GetAvailableTextureMem is 32-bit, and a game may read
+  // it as signed. At 1 GB the game's auto-detect chose Medium for
+  // everything; the Mac's GPU runs High at full resolution with room to
+  // spare.
+  game.video_memory_mb = 2047;
 #if defined(__APPLE__)
   // The Metal renderer (as for the other D3D9 games on this runtime).
   setenv("DARKSOULS2_GFX", "metal", 0);
