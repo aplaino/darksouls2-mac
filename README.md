@@ -25,11 +25,15 @@ does not work.
 
 ## Status
 
-Early, but playable: title screen, menus, character creation, and play in
-the first areas.
+Playable from the start: title screen, menus, the intro movie, character
+creation and the first areas, saving, loading and quitting.
 
-- A steady 60 fps (the game's own limit) on an M-series Mac
-- Metal renderer at the display's full resolution
+- A steady 60 fps (the game's own limit) on High at the display's full
+  resolution (see Performance)
+- Metal renderer, beyond the game's own High: its 2048 and 1024 shadow maps
+  at twice the resolution, and 16x anisotropic filtering
+- The intro movie, played into the game's own video renderer (ffmpeg
+  decodes the WMV); Escape skips it, as in the original
 - Sound and music (FMOD through DirectSound)
 - Keyboard and mouse, and controllers
 - Offline only: Steam is stood in for by an offline implementation, so
@@ -38,11 +42,36 @@ the first areas.
 
 Known issues:
 
-- The opening movie is skipped (there is no WMV decoder yet).
 - Short hitches while an area loads, as new shaders are translated to
-  Metal on the main thread.
-- Shadows sometimes look wrong.
-- Quitting can end with a crash report from the game's worker threads.
+  Metal on the main thread; in play, a brief one about once a minute (the
+  game waiting on its physics jobs) and a longer one (about 150 ms) every
+  few minutes, an anti-tamper check behind some of the game's state
+  handlers.
+- Button prompts show a controller's buttons with keyboard and mouse. The
+  port no longer reports a controller when none is connected; whether the
+  original PC release shows keyboard prompts here is not settled yet.
+- A save made with DLC present may report the DLC as missing on loading
+  (choose No to keep the items); new saves load normally.
+
+## Performance
+
+`bench/bench.sh` starts a new game in a sandbox (no save of yours is
+touched), skips the intro and stands still where the game starts, Things
+Betwixt, for 60 s; hidden window, no sound, High settings, the port's
+defaults. On an M5 Pro (macOS 26.6.2) at 3024x1964 Retina (the game at
+3600x2338), plugged in, three runs:
+
+| | |
+|---|---|
+| Frame rate | 59.99 fps (the game's cap) every run |
+| 1% low | 54.4 fps |
+| CPU | 1.15 cores |
+| GPU | 11.3 ms a frame |
+| Memory | 2.0 GB |
+
+A comparison with CrossOver like the first game's is not possible yet: the
+game renders black there with DXVK, and wined3d lacks the timestamp
+queries it needs.
 
 ## Building
 
@@ -58,8 +87,13 @@ cmake --preset release
 cmake --build out/build/release --target recomp_lift
 tools/lift.sh      # translates your DarkSoulsII.exe into generated/
 tools/build.sh
-tools/run.sh
+tools/run.sh       # or: tools/app.sh --install, then open Dark Souls II
 ```
+
+`tools/app.sh` makes `out/DarkSoulsII.app`, a bundle of the built game and
+its runtime libraries that Finder, Spotlight and the Dock can launch (logs
+in `~/Library/Logs/DarkSoulsII`); `--install` copies it to /Applications.
+It records where the game folder is when it is built.
 
 The symbol tables in `symbols/` (function addresses and names from an
 analysis of the executable) and the manifests in `manifest/` are what the
