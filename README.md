@@ -39,9 +39,8 @@ the first areas.
 Known issues:
 
 - The opening movie is skipped (there is no WMV decoder yet).
-- Occasional hitches (50-140 ms, about one every 20 s): new shaders are
-  translated to Metal on the main thread, and one recurring hitch is not
-  yet explained.
+- Short hitches while an area loads, as new shaders are translated to
+  Metal on the main thread.
 - Shadows sometimes look wrong.
 - Quitting can end with a crash report from the game's worker threads.
 
