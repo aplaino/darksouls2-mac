@@ -27,9 +27,19 @@ entry 007BD611
 entry 007BD658
 entry 007BD753
 
-# The random-interval helpers of one of the game's timers (0x00E2EA30,
-# the timer at 0x01519564), which Arxan made entries into a guard: it
-# checksums the image for 50-90 ms through its disguised control flow
-# whenever the timer fires. src/replacements.cpp runs the helper itself.
+# Copies of the random-interval helper the game's timers (0x00E2EA30) call,
+# which Arxan made entries into its guards: each checksums the image for
+# 50-90 ms through its disguised control flow whenever its timer fires.
+# The copies that start with a jump instead of the helper's own prologue;
+# src/replacements.cpp runs the helper itself.
+replace 00E2D5F0
+replace 00E2DCB0
+replace 00E2DDD0
+replace 00E2E250
+replace 00E2E370
+replace 00E2E5B0
+replace 00E2E6D0
+replace 00E2E760
 replace 00E2E7F0
 replace 00E2E880
+replace 00E2E910
