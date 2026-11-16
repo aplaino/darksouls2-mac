@@ -141,6 +141,9 @@ int main(int argc, char** argv) {
 #if defined(__APPLE__)
   // The Metal renderer (as for the other D3D9 games on this runtime).
   setenv("DARKSOULS2_GFX", "metal", 0);
+  // Beyond the game's High: its 2048 and 1024 shadow maps at twice the
+  // resolution (the 4096 one stays; overridden by RECOMP_RT_BOOST).
+  setenv("RECOMP_RT_BOOST", "2048x2048:2,1024x1024:2", 0);
 #endif
   // FMOD: lifted as modules (GameConfig::lifted_dlls) so their imports
   // don't need HLE reimplementations. Both sit next to the exe in Game/;
@@ -149,6 +152,12 @@ int main(int argc, char** argv) {
   game.lifted_dlls = {{"Game\\fmodex.dll", 0}, {"Game\\fmod_event.dll", 0x11000000}};
   // DLC/License holds a licence file per DLC the player owns.
   game.steam_owns_dlc = HasFiles(game_dir + "/DLC/License");
+  // Only a connected pad gets a pad slot, so that playing with keyboard and
+  // mouse shows the game's keyboard prompts rather than a controller's.
+  game.pad_slot_without_pad = false;
+  // 16x anisotropic filtering whatever the game asks for
+  // (DARKSOULS2_ANISO overrides).
+  game.anisotropy = 16;
   if (const char* w = std::getenv("DARKSOULS2_WATCH"); w && *w && *w != '0') {
     // Once the guest arena exists (RunProcess reserves it).
     std::thread([] {
