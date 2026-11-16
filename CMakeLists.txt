@@ -22,7 +22,7 @@ add_subdirectory("${X86RECOMP_DIR}" x86recomp)
 # recomp_lift from the user's own install; see tools/lift.sh).
 recomp_add_lifted(darksouls2_lifted "${CMAKE_CURRENT_SOURCE_DIR}/generated")
 if(TARGET darksouls2_lifted)
-  add_executable(darksouls2 src/main.cpp $<TARGET_OBJECTS:darksouls2_lifted>)
+  add_executable(darksouls2 src/main.cpp src/replacements.cpp $<TARGET_OBJECTS:darksouls2_lifted>)
   if(RECOMP_LTO)
     target_link_options(darksouls2 PRIVATE -flto=thin
       "LINKER:-cache_path_lto,${CMAKE_BINARY_DIR}/lto-cache")
